@@ -1,0 +1,272 @@
+[gd_scene load_steps=2 format=3 uid="uid://6d22sx7j3bu"]
+
+[ext_resource type="Script" path="res://鬼牌/Scripts/UI/Game.gd" id="1_game"]
+
+[node name="Game" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_game")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.2, 0.4, 0.3, 1)
+
+[node name="StatusLabel" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -200.0
+offset_top = 20.0
+offset_right = 200.0
+offset_bottom = 60.0
+grow_horizontal = 2
+theme_override_font_sizes/font_size = 24
+text = "等待游戏开始..."
+horizontal_alignment = 1
+
+[node name="TableArea" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -300.0
+offset_top = -150.0
+offset_right = 300.0
+offset_bottom = 150.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="TableArea"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="TableCardsLabel" type="Label" parent="TableArea/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "桌上有 0 张牌"
+horizontal_alignment = 1
+
+[node name="Spacer" type="Control" parent="TableArea/VBoxContainer"]
+custom_minimum_size = Vector2(0, 20)
+layout_mode = 2
+
+[node name="CurrentClaimLabel" type="Label" parent="TableArea/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "等待玩家出牌..."
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="HandContainer" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -400.0
+offset_top = -180.0
+offset_right = 400.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 0
+alignment = 1
+
+[node name="MyCardCountLabel" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -100.0
+offset_top = -200.0
+offset_right = 100.0
+offset_bottom = -180.0
+grow_horizontal = 2
+grow_vertical = 0
+text = "你的手牌: 0 张"
+horizontal_alignment = 1
+
+[node name="PlayPanel" type="Panel" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -250.0
+offset_top = -200.0
+offset_right = -20.0
+offset_bottom = 200.0
+grow_horizontal = 0
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="PlayPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Title" type="Label" parent="PlayPanel/VBoxContainer"]
+layout_mode = 2
+text = "出牌"
+horizontal_alignment = 1
+
+[node name="Spacer1" type="Control" parent="PlayPanel/VBoxContainer"]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+
+[node name="RankLabel" type="Label" parent="PlayPanel/VBoxContainer"]
+layout_mode = 2
+text = "声称点数："
+
+[node name="RankOptionButton" type="OptionButton" parent="PlayPanel/VBoxContainer"]
+layout_mode = 2
+
+[node name="Spacer2" type="Control" parent="PlayPanel/VBoxContainer"]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+
+[node name="CardCountLabel" type="Label" parent="PlayPanel/VBoxContainer"]
+layout_mode = 2
+text = "声称张数："
+
+[node name="CardCountSpinBox" type="SpinBox" parent="PlayPanel/VBoxContainer"]
+layout_mode = 2
+min_value = 1.0
+max_value = 10.0
+value = 1.0
+
+[node name="Spacer3" type="Control" parent="PlayPanel/VBoxContainer"]
+custom_minimum_size = Vector2(0, 20)
+layout_mode = 2
+
+[node name="IsLyingCheckBox" type="CheckBox" parent="PlayPanel/VBoxContainer"]
+layout_mode = 2
+text = "撒谎（声明与实际不符）"
+
+[node name="Spacer4" type="Control" parent="PlayPanel/VBoxContainer"]
+custom_minimum_size = Vector2(0, 20)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="PlayButton" type="Button" parent="PlayPanel/VBoxContainer"]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+text = "出牌"
+
+[node name="ResponsePanel" type="Panel" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -250.0
+offset_top = -180.0
+offset_right = -20.0
+offset_bottom = 180.0
+grow_horizontal = 0
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="ResponsePanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Title" type="Label" parent="ResponsePanel/VBoxContainer"]
+layout_mode = 2
+text = "你的选择"
+horizontal_alignment = 1
+
+[node name="Spacer1" type="Control" parent="ResponsePanel/VBoxContainer"]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+
+[node name="TimerLabel" type="Label" parent="ResponsePanel/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "剩余时间: 10秒"
+horizontal_alignment = 1
+
+[node name="Spacer2" type="Control" parent="ResponsePanel/VBoxContainer"]
+custom_minimum_size = Vector2(0, 20)
+layout_mode = 2
+
+[node name="ChallengeButton" type="Button" parent="ResponsePanel/VBoxContainer"]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+text = "质疑"
+
+[node name="Spacer3" type="Control" parent="ResponsePanel/VBoxContainer"]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+
+[node name="FollowButton" type="Button" parent="ResponsePanel/VBoxContainer"]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+text = "跟牌"
+
+[node name="Spacer4" type="Control" parent="ResponsePanel/VBoxContainer"]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+
+[node name="PassButton" type="Button" parent="ResponsePanel/VBoxContainer"]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+text = "过牌"
+
+[node name="Spacer5" type="Control" parent="ResponsePanel/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="PlayerInfoContainer" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 20.0
+offset_top = -150.0
+offset_right = 220.0
+offset_bottom = 150.0
+grow_vertical = 2
+
+[node name="Title" type="Label" parent="PlayerInfoContainer"]
+layout_mode = 2
+text = "玩家信息"
+horizontal_alignment = 1
+
+[node name="Separator" type="HSeparator" parent="PlayerInfoContainer"]
+layout_mode = 2

@@ -1,0 +1,111 @@
+[gd_scene load_steps=2 format=3 uid="uid://bq5yh3n8xqv4k"]
+
+[ext_resource type="Script" path="res://鬼牌/Scripts/UI/MainMenu.gd" id="1_mainmenu"]
+
+[node name="MainMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_mainmenu")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -200.0
+offset_top = -250.0
+offset_right = 200.0
+offset_bottom = 250.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Title" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 48
+text = "鬼牌"
+horizontal_alignment = 1
+
+[node name="Spacer1" type="Control" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 20)
+layout_mode = 2
+
+[node name="StatusLabel" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "正在初始化 Steam..."
+horizontal_alignment = 1
+
+[node name="Spacer2" type="Control" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 2
+
+[node name="CreateRoomButton" type="Button" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+text = "创建房间"
+
+[node name="JoinRoomButton" type="Button" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+text = "加入房间"
+
+[node name="Spacer3" type="Control" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 20)
+layout_mode = 2
+
+[node name="RoomCodeContainer" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="VBoxContainer/RoomCodeContainer"]
+layout_mode = 2
+text = "房间码："
+
+[node name="RoomCodeInput" type="LineEdit" parent="VBoxContainer/RoomCodeContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "输入房间码"
+
+[node name="Spacer4" type="Control" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 2
+
+[node name="SettingsContainer" type="VBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="VBoxContainer/SettingsContainer"]
+layout_mode = 2
+text = "房间设置"
+horizontal_alignment = 1
+
+[node name="PlayerCountContainer" type="HBoxContainer" parent="VBoxContainer/SettingsContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="VBoxContainer/SettingsContainer/PlayerCountContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "最大玩家数："
+
+[node name="PlayerCountSpinBox" type="SpinBox" parent="VBoxContainer/SettingsContainer/PlayerCountContainer"]
+layout_mode = 2
+min_value = 2.0
+max_value = 6.0
+value = 4.0
+
+[node name="ChallengeTimeContainer" type="HBoxContainer" parent="VBoxContainer/SettingsContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="VBoxContainer/SettingsContainer/ChallengeTimeContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "质疑时间（秒）："
+
+[node name="ChallengeTimeSpinBox" type="SpinBox" parent="VBoxContainer/SettingsContainer/ChallengeTimeContainer"]
+layout_mode = 2
+min_value = 5.0
+max_value = 30.0
+value = 10.0
