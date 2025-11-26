@@ -36,12 +36,7 @@ func _ready() -> void:
 	challenge_time_spinbox.value_changed.connect(_on_challenge_time_changed)
 
 	# 检查 Steam 是否已初始化
-	if SteamManager.is_offline_mode:
-		status_label.text = "离线模式 - " + SteamManager.player_name
-		create_room_button.disabled = false
-		join_room_button.disabled = true  # 离线模式不能加入房间
-		room_code_input.editable = false
-	elif not SteamManager.is_steam_initialized:
+	if not SteamManager.is_steam_initialized:
 		status_label.text = "正在初始化 Steam..."
 		create_room_button.disabled = true
 		join_room_button.disabled = true
@@ -53,12 +48,6 @@ func _on_steam_initialized(success: bool) -> void:
 		status_label.text = "欢迎，" + SteamManager.player_name + "！"
 		create_room_button.disabled = false
 		join_room_button.disabled = false
-	elif SteamManager.is_offline_mode:
-		# 离线模式
-		status_label.text = "离线模式 - " + SteamManager.player_name
-		create_room_button.disabled = false
-		join_room_button.disabled = true  # 离线模式不能加入房间
-		room_code_input.editable = false
 	else:
 		status_label.text = "Steam 初始化失败！请重启游戏"
 		create_room_button.disabled = true
@@ -91,24 +80,38 @@ func _on_join_room_pressed() -> void:
 	SteamManager.join_lobby(lobby_id)
 
 func _on_lobby_created(lobby_id: int) -> void:
+	# 检查节点是否还在场景树中
+	if not is_inside_tree():
+		return
+
 	print("房间创建成功！房间码: ", lobby_id)
 	status_label.text = "房间创建成功！房间码: " + str(lobby_id)
 
 	# 设置为房主
 	NetworkManager.set_as_host()
 
-	# 切换到大厅场景
-	get_tree().change_scene_to_file("res://鬼牌/Scenes/Lobby.tscn")
+	# 使用延迟调用切换场景，确保当前帧完成
+	call_deferred("_change_to_lobby_scene")
 
 func _on_lobby_joined(lobby_id: int) -> void:
+	# 检查节点是否还在场景树中
+	if not is_inside_tree():
+		return
+
 	print("成功加入房间: ", lobby_id)
 	status_label.text = "成功加入房间！"
 
 	# 设置为客户端
 	NetworkManager.set_as_client()
 
-	# 切换到大厅场景
-	get_tree().change_scene_to_file("res://鬼牌/Scenes/Lobby.tscn")
+	# 使用延迟调用切换场景，确保当前帧完成
+	call_deferred("_change_to_lobby_scene")
+
+# 延迟切换场景的辅助方法
+func _change_to_lobby_scene() -> void:
+	# 再次检查，防止在延迟期间节点被销毁
+	if is_inside_tree():
+		get_tree().change_scene_to_file("res://鬼牌/Scenes/Lobby.tscn")
 
 func _on_lobby_join_failed(reason: String) -> void:
 	status_label.text = "加入失败: " + reason

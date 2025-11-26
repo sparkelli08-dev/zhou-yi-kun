@@ -27,25 +27,38 @@ var is_host: bool = false
 var connected_peers: Array = []
 
 func _ready() -> void:
-	# 仅在在线模式连接 Steam P2P 信号
-	if not SteamManager.is_offline_mode:
-		Steam.p2p_session_request.connect(_on_p2p_session_request)
-		Steam.p2p_session_connect_fail.connect(_on_p2p_session_connect_fail)
+	# 等待 Steam 初始化后再连接信号
+	SteamManager.steam_initialized.connect(_on_steam_initialized)
+
+	# 如果 Steam 已经初始化，直接连接信号
+	if SteamManager.is_steam_initialized:
+		_setup_steam_signals()
+
+func _on_steam_initialized(success: bool) -> void:
+	if success:
+		_setup_steam_signals()
+
+func _setup_steam_signals() -> void:
+	# 连接 Steam P2P 信号
+	Steam.p2p_session_request.connect(_on_p2p_session_request)
+	Steam.p2p_session_connect_fail.connect(_on_p2p_session_connect_fail)
 
 func _process(_delta: float) -> void:
-	# 离线模式不需要读取网络包
-	if not SteamManager.is_offline_mode:
+	if SteamManager.is_steam_initialized:
 		_read_p2p_packets()
 
 # 读取 P2P 数据包
 func _read_p2p_packets() -> void:
 	while Steam.getAvailableP2PPacketSize(CHANNEL_GAME) > 0:
-		var packet = Steam.readP2PPacket(Steam.getAvailableP2PPacketSize(CHANNEL_GAME), CHANNEL_GAME)
+		var packet_size = Steam.getAvailableP2PPacketSize(CHANNEL_GAME)
+		var packet = Steam.readP2PPacket(packet_size, CHANNEL_GAME)
 
-		if packet.empty() or not packet.has("data"):
+		# 检查数据包是否有效
+		if packet.is_empty() or not packet.has("data") or not packet.has("remote_steam_id"):
+			print("警告: 收到无效的 P2P 数据包")
 			continue
 
-		var sender_id: int = packet["steam_id_remote"]
+		var sender_id: int = packet["remote_steam_id"]
 		var data: PackedByteArray = packet["data"]
 
 		# 解析消息
@@ -55,8 +68,7 @@ func _read_p2p_packets() -> void:
 
 # 发送消息给特定玩家
 func send_message_to(peer_id: int, message: Dictionary) -> void:
-	# 离线模式不发送网络消息
-	if SteamManager.is_offline_mode:
+	if not SteamManager.is_steam_initialized:
 		return
 
 	var data = var_to_bytes(message)
@@ -64,10 +76,6 @@ func send_message_to(peer_id: int, message: Dictionary) -> void:
 
 # 发送消息给所有玩家（广播）
 func send_message_to_all(message: Dictionary, exclude_self: bool = true) -> void:
-	# 离线模式不发送网络消息
-	if SteamManager.is_offline_mode:
-		return
-
 	for member in SteamManager.lobby_members:
 		var peer_id = member["steam_id"]
 		if exclude_self and peer_id == SteamManager.steam_id:
@@ -76,13 +84,11 @@ func send_message_to_all(message: Dictionary, exclude_self: bool = true) -> void
 
 # 发送消息给房主
 func send_message_to_host(message: Dictionary) -> void:
-	# 离线模式不发送网络消息
-	if SteamManager.is_offline_mode:
+	if not SteamManager.is_steam_initialized or is_host:
 		return
 
-	if not is_host:
-		var owner_id = Steam.getLobbyOwner(SteamManager.current_lobby_id)
-		send_message_to(owner_id, message)
+	var owner_id = Steam.getLobbyOwner(SteamManager.current_lobby_id)
+	send_message_to(owner_id, message)
 
 # Steam 回调：收到 P2P 会话请求
 func _on_p2p_session_request(remote_id: int) -> void:
@@ -113,13 +119,13 @@ func _on_p2p_session_connect_fail(steam_id: int, session_error: int) -> void:
 
 # 关闭与指定玩家的连接
 func close_p2p_session(peer_id: int) -> void:
-	if not SteamManager.is_offline_mode:
+	if SteamManager.is_steam_initialized:
 		Steam.closeP2PSessionWithUser(peer_id)
 	connected_peers.erase(peer_id)
 
 # 关闭所有 P2P 连接
 func close_all_p2p_sessions() -> void:
-	if not SteamManager.is_offline_mode:
+	if SteamManager.is_steam_initialized:
 		for peer_id in connected_peers:
 			Steam.closeP2PSessionWithUser(peer_id)
 	connected_peers.clear()

@@ -20,3 +20,9 @@ config/icon="res://icon.svg"
 SteamManager="*res://鬼牌/Scripts/Autoload/SteamManager.gd"
 NetworkManager="*res://鬼牌/Scripts/Autoload/NetworkManager.gd"
 GameManager="*res://鬼牌/Scripts/Autoload/GameManager.gd"
+
+[steam]
+
+initialization/app_id=480
+initialization/initialize_on_startup=false
+initialization/embed_callbacks=false

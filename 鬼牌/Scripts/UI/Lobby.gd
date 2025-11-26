@@ -13,6 +13,24 @@ var is_ready: bool = false
 var player_list_items: Dictionary = {}  # steam_id -> Label
 
 func _ready() -> void:
+	# 检查 Steam 是否已初始化
+	if not SteamManager.is_steam_initialized:
+		status_label.text = "Steam 未初始化，返回主菜单..."
+		push_error("Lobby: Steam 未初始化")
+		await get_tree().create_timer(2.0).timeout
+		if is_inside_tree():
+			get_tree().change_scene_to_file("res://鬼牌/Scenes/MainMenu.tscn")
+		return
+
+	# 检查是否在有效的大厅中
+	if SteamManager.current_lobby_id == 0:
+		status_label.text = "无效的大厅，返回主菜单..."
+		push_error("Lobby: 无效的大厅 ID")
+		await get_tree().create_timer(2.0).timeout
+		if is_inside_tree():
+			get_tree().change_scene_to_file("res://鬼牌/Scenes/MainMenu.tscn")
+		return
+
 	# 连接按钮信号
 	ready_button.pressed.connect(_on_ready_pressed)
 	start_game_button.pressed.connect(_on_start_game_pressed)
@@ -26,18 +44,12 @@ func _ready() -> void:
 	GameManager.game_started.connect(_on_game_started)
 
 	# 显示房间码
-	if SteamManager.is_offline_mode:
-		room_code_label.text = "房间码: " + str(SteamManager.current_lobby_id) + " [离线模式]"
-	else:
-		room_code_label.text = "房间码: " + str(SteamManager.current_lobby_id)
+	room_code_label.text = "房间码: " + str(SteamManager.current_lobby_id)
 
 	# 如果是房主，显示开始游戏按钮
 	if SteamManager.is_lobby_owner:
 		start_game_button.visible = true
-		if SteamManager.is_offline_mode:
-			status_label.text = "离线单人游戏"
-		else:
-			status_label.text = "你是房主，等待玩家加入..."
+		status_label.text = "你是房主，等待玩家加入..."
 	else:
 		start_game_button.visible = false
 		status_label.text = "等待房主开始游戏..."
@@ -52,6 +64,10 @@ func _refresh_player_list() -> void:
 
 	player_list_items.clear()
 
+	# 检查 Steam 是否已初始化
+	if not SteamManager.is_steam_initialized:
+		return
+
 	# 添加所有玩家
 	for member in SteamManager.lobby_members:
 		var player_label = Label.new()
@@ -59,7 +75,8 @@ func _refresh_player_list() -> void:
 		var steam_id = member["steam_id"]
 
 		# 标记房主
-		if steam_id == Steam.getLobbyOwner(SteamManager.current_lobby_id):
+		var lobby_owner_id = Steam.getLobbyOwner(SteamManager.current_lobby_id)
+		if steam_id == lobby_owner_id:
 			player_name += " [房主]"
 
 		# 标记自己
@@ -130,9 +147,24 @@ func _on_leave_pressed() -> void:
 	SteamManager.leave_lobby()
 	NetworkManager.close_all_p2p_sessions()
 
-	# 返回主菜单
-	get_tree().change_scene_to_file("res://鬼牌/Scenes/MainMenu.tscn")
+	# 使用延迟调用返回主菜单
+	if is_inside_tree():
+		call_deferred("_change_to_main_menu")
+
+# 延迟切换到主菜单
+func _change_to_main_menu() -> void:
+	if is_inside_tree():
+		get_tree().change_scene_to_file("res://鬼牌/Scenes/MainMenu.tscn")
 
 func _on_game_started() -> void:
-	# 切换到游戏场景
-	get_tree().change_scene_to_file("res://鬼牌/Scenes/Game.tscn")
+	# 检查节点是否还在场景树中
+	if not is_inside_tree():
+		return
+
+	# 使用延迟调用切换场景
+	call_deferred("_change_to_game_scene")
+
+# 延迟切换到游戏场景
+func _change_to_game_scene() -> void:
+	if is_inside_tree():
+		get_tree().change_scene_to_file("res://鬼牌/Scenes/Game.tscn")

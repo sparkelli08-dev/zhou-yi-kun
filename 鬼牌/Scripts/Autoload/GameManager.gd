@@ -45,7 +45,7 @@ var current_player_index: int = 0
 var first_player_index: int = 0  # 首个出牌玩家（每轮胜者）
 
 # 牌堆
-var deck: Deck = Deck.new()
+var deck: Deck = null
 
 # 当前回合数据
 var table_cards: Array = []  # 桌上的牌（叩置状态）
@@ -60,6 +60,8 @@ var challenger_id: int = 0
 var challenge_target_index: int = -1  # 被质疑的玩家索引（table_claims 中的索引）
 
 func _ready() -> void:
+	# 初始化 Deck
+	deck = Deck.new()
 	add_child(deck)
 	NetworkManager.message_received.connect(_on_network_message_received)
 

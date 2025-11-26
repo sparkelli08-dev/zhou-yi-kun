@@ -11,7 +11,6 @@ signal player_left(steam_id: int)
 signal lobby_data_updated()
 
 var is_steam_initialized: bool = false
-var is_offline_mode: bool = false  # 离线模式标志
 var steam_id: int = 0
 var player_name: String = ""
 var current_lobby_id: int = 0
@@ -26,7 +25,8 @@ func initialize_steam() -> void:
 	# 检查 Steam 是否存在
 	if not Steam:
 		print("=== Steam API 不存在！GodotSteam 插件可能未安装 ===")
-		_enter_offline_mode("GodotSteam 插件未找到")
+		push_error("GodotSteam 插件未找到")
+		steam_initialized.emit(false)
 		return
 
 	print("开始初始化 Steam...")
@@ -36,18 +36,17 @@ func initialize_steam() -> void:
 
 	print("Steam 初始化结果: ", init_result)
 
-	if init_result['status'] == 1:
-		# 初始化成功
+	if init_result['status'] == 0:
+		# 初始化成功（status=0 表示 STEAM_API_INIT_RESULT_OK）
 		_setup_steam_online_mode()
 		return
 
-	# 初始化失败
+	# 初始化失败（status > 0 表示各种错误）
 	var error_msg = "未知错误"
 	match init_result['status']:
-		0: error_msg = "Steam 客户端未运行（status=0）"
-		2: error_msg = "一般性失败（status=2）"
-		3: error_msg = "Steam 客户端未运行（status=3）"
-		4: error_msg = "Steam API 未加载（status=4）"
+		1: error_msg = "一般性失败（status=1）"
+		2: error_msg = "无法连接到Steam（status=2）"
+		3: error_msg = "Steam客户端需要更新（status=3）"
 		_: error_msg = "错误代码: " + str(init_result['status'])
 
 	print("=== Steam 初始化失败: ", error_msg, " ===")
@@ -56,29 +55,12 @@ func initialize_steam() -> void:
 	print("1. 确保 Steam 客户端已启动（不只是游戏本身）")
 	print("2. 如果 Steam 已启动，尝试重启 Steam 客户端")
 	print("3. 检查 GodotSteam DLL 文件是否存在")
-	print("4. 游戏将在离线模式下继续运行")
-	_enter_offline_mode(error_msg)
-
-func _enter_offline_mode(reason: String) -> void:
-	print("========================================")
-	print("切换到离线模式")
-	print("原因: ", reason)
-	print("========================================")
-
-	is_offline_mode = true
-	is_steam_initialized = false
-
-	# 离线模式使用本地信息
-	steam_id = randi() % 1000000  # 生成随机本地ID
-	player_name = "离线玩家" + str(steam_id % 1000)
-
-	print("离线模式已启动！玩家: ", player_name)
-	steam_initialized.emit(false)  # 通知 Steam 不可用，但游戏继续
+	push_error("Steam 初始化失败: " + error_msg)
+	steam_initialized.emit(false)
 
 # Steam 成功初始化后的处理
 func _setup_steam_online_mode() -> void:
 	is_steam_initialized = true
-	is_offline_mode = false
 	steam_id = Steam.getSteamID()
 	player_name = Steam.getPersonaName()
 
@@ -103,33 +85,13 @@ func _process(_delta: float) -> void:
 		Steam.run_callbacks()
 
 # 创建大厅
-func create_lobby(max_players: int, challenge_time: int) -> void:
-	if is_offline_mode:
-		# 离线模式：创建本地房间
-		_create_offline_lobby(max_players)
-		return
-
+func create_lobby(max_players: int, _challenge_time: int) -> void:
 	if not is_steam_initialized:
 		push_error("Steam 未初始化")
 		return
 
 	# 创建仅好友可见的大厅
 	Steam.createLobby(Steam.LOBBY_TYPE_FRIENDS_ONLY, max_players)
-
-# 离线模式：创建本地房间
-func _create_offline_lobby(max_players: int) -> void:
-	current_lobby_id = randi() % 100000  # 生成本地房间ID
-	is_lobby_owner = true
-
-	# 添加自己为第一个玩家
-	lobby_members.clear()
-	lobby_members.append({
-		"steam_id": steam_id,
-		"name": player_name
-	})
-
-	print("离线房间创建成功！房间ID: ", current_lobby_id)
-	lobby_created.emit(current_lobby_id)
 
 # Steam 回调：大厅创建成功
 func _on_lobby_created(result: int, lobby_id: int) -> void:
@@ -161,11 +123,6 @@ func _on_lobby_match_list(lobbies: Array) -> void:
 
 # 通过 ID 加入大厅
 func join_lobby(lobby_id: int) -> void:
-	if is_offline_mode:
-		# 离线模式不支持加入房间
-		lobby_join_failed.emit("离线模式不支持加入其他房间")
-		return
-
 	if not is_steam_initialized:
 		return
 
@@ -198,8 +155,7 @@ func _on_lobby_joined(lobby_id: int, _permissions: int, _locked: bool, response:
 # 离开大厅
 func leave_lobby() -> void:
 	if current_lobby_id != 0:
-		if not is_offline_mode:
-			Steam.leaveLobby(current_lobby_id)
+		Steam.leaveLobby(current_lobby_id)
 		current_lobby_id = 0
 		is_lobby_owner = false
 		lobby_members.clear()
@@ -207,10 +163,6 @@ func leave_lobby() -> void:
 # 更新大厅成员列表
 func update_lobby_members() -> void:
 	if current_lobby_id == 0:
-		return
-
-	# 离线模式已经在 _create_offline_lobby 中设置了成员列表
-	if is_offline_mode:
 		return
 
 	lobby_members.clear()
@@ -227,7 +179,7 @@ func update_lobby_members() -> void:
 	print("大厅成员数: ", lobby_members.size())
 
 # Steam 回调：大厅聊天更新（玩家加入/离开）
-func _on_lobby_chat_update(lobby_id: int, changed_id: int, making_change_id: int, chat_state: int) -> void:
+func _on_lobby_chat_update(lobby_id: int, changed_id: int, _making_change_id: int, chat_state: int) -> void:
 	if lobby_id != current_lobby_id:
 		return
 
@@ -250,12 +202,13 @@ func _on_lobby_chat_update(lobby_id: int, changed_id: int, making_change_id: int
 			player_left.emit(changed_id)
 
 # Steam 回调：大厅数据更新
-func _on_lobby_data_update(success: int, lobby_id: int, member_id: int, key: int) -> void:
+# 注意：在 Godot 4 的 GodotSteam 中，lobby_data_update 只传递 3 个参数
+func _on_lobby_data_update(success: int, lobby_id: int, _member_id: int) -> void:
 	if success == 1 and lobby_id == current_lobby_id:
 		lobby_data_updated.emit()
 
 # Steam 回调：收到好友邀请
-func _on_lobby_invite(inviter: int, lobby_id: int, game_id: int) -> void:
+func _on_lobby_invite(inviter: int, lobby_id: int, _game_id: int) -> void:
 	var inviter_name = Steam.getFriendPersonaName(inviter)
 	print("收到来自 ", inviter_name, " 的邀请，大厅 ID: ", lobby_id)
 
@@ -266,22 +219,23 @@ func _on_join_requested(lobby_id: int) -> void:
 
 # 设置大厅数据
 func set_lobby_data(key: String, value: String) -> void:
-	if current_lobby_id != 0 and is_lobby_owner:
+	if current_lobby_id != 0 and is_lobby_owner and is_steam_initialized:
 		Steam.setLobbyData(current_lobby_id, key, value)
 
 # 获取大厅数据
 func get_lobby_data(key: String) -> String:
-	if current_lobby_id != 0:
+	if current_lobby_id != 0 and is_steam_initialized:
 		return Steam.getLobbyData(current_lobby_id, key)
 	return ""
 
 # 获取大厅最大玩家数
 func get_max_players() -> int:
-	if current_lobby_id != 0:
-		return Steam.getLobbyMemberLimit(current_lobby_id)
-	return 0
+	if current_lobby_id == 0 or not is_steam_initialized:
+		return 0
+
+	return Steam.getLobbyMemberLimit(current_lobby_id)
 
 # 设置大厅最大玩家数
 func set_max_players(max_players: int) -> void:
-	if current_lobby_id != 0 and is_lobby_owner:
+	if current_lobby_id != 0 and is_lobby_owner and is_steam_initialized:
 		Steam.setLobbyMemberLimit(current_lobby_id, max_players)
