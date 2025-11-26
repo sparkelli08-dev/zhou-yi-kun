@@ -40,9 +40,14 @@ var current_state: GameState = GameState.WAITING
 var current_phase: TurnPhase = TurnPhase.CLAIM
 
 # 玩家管理
-var players: Array = []  # 玩家列表 {steam_id, name, hand, card_count, is_ready}
+var players: Array = []  # 玩家列表 {steam_id, name, hand, card_count, is_ready, is_ai}
 var current_player_index: int = 0
 var first_player_index: int = 0  # 首个出牌玩家（每轮胜者）
+
+# AI 相关
+var ai_think_time: float = 1.5  # AI思考时间（秒）- 将根据challenge_time动态调整
+var ai_timer: float = 0.0
+var ai_action_pending: bool = false
 
 # 牌堆
 var deck: Deck = null
@@ -72,6 +77,12 @@ func _process(delta: float) -> void:
 		if challenge_timer <= 0:
 			_on_challenge_timeout()
 
+	# AI 思考计时
+	if ai_action_pending and ai_timer > 0:
+		ai_timer -= delta
+		if ai_timer <= 0:
+			_execute_ai_action()
+
 # ========== 游戏初始化 ==========
 
 # 初始化游戏
@@ -84,6 +95,10 @@ func initialize_game(player_list: Array, config: Dictionary) -> void:
 	max_players = config.get("max_players", 6)
 	challenge_time = config.get("challenge_time", 10)
 
+	# 根据响应时间调整AI思考时间（为响应时间的1/4，最少1秒，最多3秒）
+	ai_think_time = clamp(challenge_time / 4.0, 1.0, 3.0)
+	print("AI思考时间设置为: ", ai_think_time, " 秒")
+
 	# 创建玩家数据
 	for player_data in player_list:
 		players.append({
@@ -91,7 +106,8 @@ func initialize_game(player_list: Array, config: Dictionary) -> void:
 			"name": player_data["name"],
 			"hand": [],
 			"card_count": 0,
-			"is_ready": false
+			"is_ready": false,
+			"is_ai": player_data.get("is_ai", false)
 		})
 
 	# 根据玩家数量决定使用几副牌
@@ -121,6 +137,9 @@ func start_game() -> void:
 	print("游戏开始！首个出牌玩家: ", players[first_player_index]["name"])
 	game_started.emit()
 	turn_changed.emit(players[current_player_index]["steam_id"])
+
+	# 如果当前玩家是AI，触发AI行动
+	_check_ai_turn()
 
 # 发牌
 func deal_cards() -> void:
@@ -198,6 +217,9 @@ func player_claim_cards(player_id: int, claimed_rank: String, claimed_count: int
 
 	print("玩家 ", player["name"], " 声称出了 ", claimed_count, " 张 ", claimed_rank)
 
+	# 检查是否有AI需要响应
+	_check_ai_response()
+
 # 玩家跟牌
 func player_follow_cards(player_id: int, claimed_rank: String, claimed_count: int, actual_cards: Array) -> void:
 	if current_state != GameState.PLAYING or current_phase != TurnPhase.WAIT_RESPONSE:
@@ -249,6 +271,9 @@ func player_follow_cards(player_id: int, claimed_rank: String, claimed_count: in
 	waiting_for_responses = true
 
 	print("玩家 ", player["name"], " 跟牌：声称出了 ", claimed_count, " 张 ", claimed_rank)
+
+	# 检查是否有AI需要响应
+	_check_ai_response()
 
 # 玩家质疑
 func player_challenge(challenger_id_param: int) -> void:
@@ -315,6 +340,9 @@ func player_challenge(challenger_id_param: int) -> void:
 	current_phase = TurnPhase.CLAIM
 	turn_changed.emit(next_player_id)
 
+	# 检查AI回合
+	_check_ai_turn()
+
 # 玩家过牌
 func player_pass(player_id: int) -> void:
 	if current_state != GameState.PLAYING or current_phase != TurnPhase.WAIT_RESPONSE:
@@ -339,6 +367,9 @@ func player_pass(player_id: int) -> void:
 
 	if all_passed:
 		_all_players_passed()
+	else:
+		# 检查是否有下一个AI需要响应
+		_check_ai_response()
 
 # 所有玩家都过牌
 func _all_players_passed() -> void:
@@ -358,6 +389,9 @@ func _all_players_passed() -> void:
 
 	round_ended.emit()
 	turn_changed.emit(players[current_player_index]["steam_id"])
+
+	# 检查AI回合
+	_check_ai_turn()
 
 # 质疑超时
 func _on_challenge_timeout() -> void:
@@ -478,3 +512,133 @@ func _cards_from_dict_array(cards_data: Array) -> Array:
 	for card_data in cards_data:
 		cards.append(Card.from_dict(card_data))
 	return cards
+
+# ========== AI 系统 ==========
+
+# 检查是否是AI的回合
+func _check_ai_turn() -> void:
+	if current_state != GameState.PLAYING:
+		return
+
+	if current_phase == TurnPhase.CLAIM:
+		var current_player = players[current_player_index]
+		if not current_player.get("is_ai", false):
+			return
+
+		# 是AI的回合，开始思考
+		ai_action_pending = true
+		ai_timer = ai_think_time
+	elif current_phase == TurnPhase.WAIT_RESPONSE:
+		_check_ai_response()
+
+# 检查是否有AI需要响应
+func _check_ai_response() -> void:
+	if current_phase != TurnPhase.WAIT_RESPONSE:
+		return
+
+	# 查找第一个未过牌的AI
+	for player in players:
+		if player.get("is_ai", false) and player["steam_id"] not in players_passed:
+			# 找到了AI，让它思考
+			ai_action_pending = true
+			ai_timer = ai_think_time
+			return
+
+# 执行AI行动
+func _execute_ai_action() -> void:
+	ai_action_pending = false
+
+	if current_phase == TurnPhase.CLAIM:
+		# AI出牌阶段
+		_ai_claim_cards()
+	elif current_phase == TurnPhase.WAIT_RESPONSE:
+		# AI响应阶段
+		_ai_response_to_claim()
+
+# AI出牌
+func _ai_claim_cards() -> void:
+	var ai_player = players[current_player_index]
+	if ai_player["hand"].is_empty():
+		return
+
+	# 简单AI策略：随机选择一张牌出
+	var hand: Array = ai_player["hand"]
+
+	# 找出手牌中数量最多的牌型
+	var rank_counts = {}
+	for card in hand:
+		var rank = card.get_rank_name()
+		rank_counts[rank] = rank_counts.get(rank, 0) + 1
+
+	# 选择数量最多的牌型
+	var best_rank = ""
+	var best_count = 0
+	for rank in rank_counts:
+		if rank_counts[rank] > best_count:
+			best_rank = rank
+			best_count = rank_counts[rank]
+
+	# 收集该牌型的所有牌
+	var cards_to_play = []
+	for card in hand:
+		if card.get_rank_name() == best_rank:
+			cards_to_play.append(card)
+
+	# 如果没有找到，随机出1张
+	if cards_to_play.is_empty():
+		cards_to_play.append(hand[0])
+		best_rank = hand[0].get_rank_name()
+		best_count = 1
+
+	print("AI ", ai_player["name"], " 出牌: ", best_count, " 张 ", best_rank)
+	player_claim_cards(ai_player["steam_id"], best_rank, best_count, cards_to_play)
+
+# AI响应其他玩家的出牌
+func _ai_response_to_claim() -> void:
+	# 简单策略：
+	# 70%概率过牌
+	# 20%概率质疑
+	# 10%概率跟牌（如果有相同牌型）
+
+	var ai_index = -1
+	for i in range(players.size()):
+		if players[i].get("is_ai", false) and players[i]["steam_id"] not in players_passed:
+			ai_index = i
+			break
+
+	if ai_index == -1:
+		return
+
+	var ai_player = players[ai_index]
+	var random_value = randf()
+
+	if random_value < 0.7:
+		# 过牌
+		print("AI ", ai_player["name"], " 选择过牌")
+		player_pass(ai_player["steam_id"])
+	elif random_value < 0.9:
+		# 质疑
+		print("AI ", ai_player["name"], " 选择质疑")
+		player_challenge(ai_player["steam_id"])
+	else:
+		# 尝试跟牌
+		if not current_claim.is_empty():
+			var claimed_rank = current_claim["rank"]
+			var hand: Array = ai_player["hand"]
+
+			# 查找相同牌型
+			var matching_cards = []
+			for card in hand:
+				if card.get_rank_name() == claimed_rank:
+					matching_cards.append(card)
+
+			if matching_cards.size() > 0:
+				# 跟牌
+				var count = min(matching_cards.size(), current_claim["count"])
+				var cards_to_follow = matching_cards.slice(0, count)
+				print("AI ", ai_player["name"], " 选择跟牌: ", count, " 张 ", claimed_rank)
+				player_follow_cards(ai_player["steam_id"], claimed_rank, count, cards_to_follow)
+			else:
+				# 没有相同牌型，过牌
+				print("AI ", ai_player["name"], " 没有相同牌型，选择过牌")
+				player_pass(ai_player["steam_id"])

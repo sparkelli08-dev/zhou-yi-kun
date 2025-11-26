@@ -77,7 +77,11 @@ func _on_game_started() -> void:
 
 func _on_cards_dealt(player_id: int, cards: Array) -> void:
 	if player_id == SteamManager.steam_id:
-		my_hand = cards
+		# 转换类型
+		my_hand.clear()
+		for card in cards:
+			if card is Card:
+				my_hand.append(card)
 		_display_hand()
 		my_card_count_label.text = "你的手牌: " + str(my_hand.size()) + " 张"
 
@@ -112,7 +116,11 @@ func _on_cards_played(player_id: int, card_count: int) -> void:
 
 	# 更新手牌显示
 	if player_id == SteamManager.steam_id:
-		my_hand = GameManager.get_player_by_id(SteamManager.steam_id)["hand"]
+		var player_hand = GameManager.get_player_by_id(SteamManager.steam_id)["hand"]
+		my_hand.clear()
+		for card in player_hand:
+			if card is Card:
+				my_hand.append(card)
 		_display_hand()
 		my_card_count_label.text = "你的手牌: " + str(my_hand.size()) + " 张"
 
@@ -148,8 +156,12 @@ func _on_challenge_result(success: bool, cards: Array, penalty_player: int) -> v
 
 	current_claim_label.text = revealed_text
 
-	# 更新手牌
-	my_hand = GameManager.get_player_by_id(SteamManager.steam_id)["hand"]
+	# 更新手牌 - 转换类型
+	var player_hand = GameManager.get_player_by_id(SteamManager.steam_id)["hand"]
+	my_hand.clear()
+	for card in player_hand:
+		if card is Card:
+			my_hand.append(card)
 	_display_hand()
 	my_card_count_label.text = "你的手牌: " + str(my_hand.size()) + " 张"
 

@@ -75,6 +75,25 @@ size_flags_vertical = 3
 custom_minimum_size = Vector2(0, 20)
 layout_mode = 2
 
+[node name="TimeSettingContainer" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+alignment = 1
+
+[node name="TimeLabel" type="Label" parent="VBoxContainer/TimeSettingContainer"]
+layout_mode = 2
+text = "响应时间: "
+
+[node name="TimeSpinBox" type="SpinBox" parent="VBoxContainer/TimeSettingContainer"]
+layout_mode = 2
+min_value = 5.0
+max_value = 60.0
+value = 10.0
+suffix = "秒"
+
+[node name="Spacer4_2" type="Control" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+
 [node name="ReadyButton" type="Button" parent="VBoxContainer"]
 custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
