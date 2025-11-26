@@ -1,0 +1,215 @@
+[gd_scene load_steps=3 format=3 uid="uid://c8yv3d4qm7xwh"]
+
+[ext_resource type="Script" uid="uid://byd0d4ayv6qgw" path="res://GameManager.gd" id="1_h8k3r"]
+[ext_resource type="Script" uid="uid://kjh5mch5vfxa" path="res://UIController.gd" id="2_p5m9t"]
+
+[node name="Main" type="Node"]
+
+[node name="GameManager" type="Node" parent="."]
+script = ExtResource("1_h8k3r")
+
+[node name="UIController" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("2_p5m9t")
+
+[node name="MarginContainer" type="MarginContainer" parent="UIController"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="VBoxContainer" type="VBoxContainer" parent="UIController/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="TopBar" type="HBoxContainer" parent="UIController/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="CurrentRankLabel" type="Label" parent="UIController/MarginContainer/VBoxContainer/TopBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 24
+text = "当前牌面：A"
+
+[node name="GameStateLabel" type="Label" parent="UIController/MarginContainer/VBoxContainer/TopBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 24
+text = "游戏状态"
+horizontal_alignment = 2
+
+[node name="MessageLabel" type="Label" parent="UIController/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "消息区域"
+horizontal_alignment = 1
+
+[node name="CenterArea" type="HBoxContainer" parent="UIController/MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 20
+
+[node name="AIPlayers" type="VBoxContainer" parent="UIController/MarginContainer/VBoxContainer/CenterArea"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 15
+
+[node name="AIPlayer1" type="VBoxContainer" parent="UIController/MarginContainer/VBoxContainer/CenterArea/AIPlayers"]
+layout_mode = 2
+
+[node name="NameLabel" type="Label" parent="UIController/MarginContainer/VBoxContainer/CenterArea/AIPlayers/AIPlayer1"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "AI 玩家 1"
+
+[node name="CardCountLabel" type="Label" parent="UIController/MarginContainer/VBoxContainer/CenterArea/AIPlayers/AIPlayer1"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "13 张牌"
+
+[node name="AIPlayer2" type="VBoxContainer" parent="UIController/MarginContainer/VBoxContainer/CenterArea/AIPlayers"]
+layout_mode = 2
+
+[node name="NameLabel" type="Label" parent="UIController/MarginContainer/VBoxContainer/CenterArea/AIPlayers/AIPlayer2"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "AI 玩家 2"
+
+[node name="CardCountLabel" type="Label" parent="UIController/MarginContainer/VBoxContainer/CenterArea/AIPlayers/AIPlayer2"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "13 张牌"
+
+[node name="AIPlayer3" type="VBoxContainer" parent="UIController/MarginContainer/VBoxContainer/CenterArea/AIPlayers"]
+layout_mode = 2
+
+[node name="NameLabel" type="Label" parent="UIController/MarginContainer/VBoxContainer/CenterArea/AIPlayers/AIPlayer3"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "AI 玩家 3"
+
+[node name="CardCountLabel" type="Label" parent="UIController/MarginContainer/VBoxContainer/CenterArea/AIPlayers/AIPlayer3"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "13 张牌"
+
+[node name="DiscardPilePanel" type="PanelContainer" parent="UIController/MarginContainer/VBoxContainer/CenterArea"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+
+[node name="VBoxContainer" type="VBoxContainer" parent="UIController/MarginContainer/VBoxContainer/CenterArea/DiscardPilePanel"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="PileCountLabel" type="Label" parent="UIController/MarginContainer/VBoxContainer/CenterArea/DiscardPilePanel/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+text = "弃牌堆：0 张牌"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="LastPlayLabel" type="Label" parent="UIController/MarginContainer/VBoxContainer/CenterArea/DiscardPilePanel/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "上次出牌将显示在这里"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ChallengePanel" type="VBoxContainer" parent="UIController/MarginContainer/VBoxContainer/CenterArea"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="ChallengeButton" type="Button" parent="UIController/MarginContainer/VBoxContainer/CenterArea/ChallengePanel"]
+layout_mode = 2
+size_flags_vertical = 4
+theme_override_font_sizes/font_size = 32
+text = "质疑！"
+
+[node name="TimerLabel" type="Label" parent="UIController/MarginContainer/VBoxContainer/CenterArea/ChallengePanel"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 48
+text = "3.0s"
+horizontal_alignment = 1
+
+[node name="BottomArea" type="VBoxContainer" parent="UIController/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="PlayerInfoLabel" type="Label" parent="UIController/MarginContainer/VBoxContainer/BottomArea"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "你的手牌"
+horizontal_alignment = 1
+
+[node name="RankSelectionPanel" type="PanelContainer" parent="UIController/MarginContainer/VBoxContainer/BottomArea"]
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
+
+[node name="RankSelectionContainer" type="HBoxContainer" parent="UIController/MarginContainer/VBoxContainer/BottomArea/RankSelectionPanel"]
+layout_mode = 2
+theme_override_constants/separation = 5
+alignment = 1
+
+[node name="PlayerHandPanel" type="PanelContainer" parent="UIController/MarginContainer/VBoxContainer/BottomArea"]
+custom_minimum_size = Vector2(0, 150)
+layout_mode = 2
+
+[node name="HandContainer" type="HBoxContainer" parent="UIController/MarginContainer/VBoxContainer/BottomArea/PlayerHandPanel"]
+layout_mode = 2
+theme_override_constants/separation = 5
+alignment = 1
+
+[node name="PlayButton" type="Button" parent="UIController/MarginContainer/VBoxContainer/BottomArea"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "打出选中的牌"
+
+[node name="GameOverPanel" type="Panel" parent="UIController"]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -200.0
+offset_top = -100.0
+offset_right = 200.0
+offset_bottom = 100.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="UIController/GameOverPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="WinnerLabel" type="Label" parent="UIController/GameOverPanel/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+text = "玩家获胜！"
+horizontal_alignment = 1
+
+[node name="RestartButton" type="Button" parent="UIController/GameOverPanel/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "重新开始"
