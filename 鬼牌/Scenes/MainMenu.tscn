@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://bq5yh3n8xqv4k"]
 
-[ext_resource type="Script" path="res://鬼牌/Scripts/UI/MainMenu.gd" id="1_mainmenu"]
+[ext_resource type="Script" uid="uid://bbr8aj3v4myoh" path="res://鬼牌/Scripts/UI/MainMenu.gd" id="1_mainmenu"]
 
 [node name="MainMenu" type="Control"]
 layout_mode = 3
