@@ -7,6 +7,7 @@ signal connection_established(peer_id: int)
 signal connection_failed(peer_id: int)
 
 enum MessageType {
+	HEARTBEAT,         # 心跳包 - 用于建立和保持 P2P 连接
 	PLAYER_READY,
 	GAME_START,
 	DEAL_CARDS,
@@ -42,6 +43,11 @@ func _setup_steam_signals() -> void:
 	# 连接 Steam P2P 信号
 	Steam.p2p_session_request.connect(_on_p2p_session_request)
 	Steam.p2p_session_connect_fail.connect(_on_p2p_session_connect_fail)
+
+	# 设置 P2P 允许使用 Steam 中继服务器（解决 NAT 穿透问题）
+	# 这允许在直连失败时使用 Steam 的中继服务器
+	Steam.allowP2PPacketRelay(true)
+	print("P2P 中继已启用，可以使用 Steam 服务器进行连接")
 
 func _process(_delta: float) -> void:
 	if SteamManager.is_steam_initialized:
@@ -217,3 +223,29 @@ func send_sync_state(state: Dictionary) -> void:
 			"type": MessageType.SYNC_STATE,
 			"state": state
 		}, false)
+
+# 主动建立 P2P 连接 - 向所有大厅成员发送心跳包
+func establish_p2p_connections() -> void:
+	if not SteamManager.is_steam_initialized or SteamManager.current_lobby_id == 0:
+		print("无法建立 P2P 连接：Steam 未初始化或不在大厅中")
+		return
+
+	print("开始建立 P2P 连接...")
+
+	# 向所有大厅成员发送心跳包
+	for member in SteamManager.lobby_members:
+		var peer_id = member["steam_id"]
+
+		# 跳过自己
+		if peer_id == SteamManager.steam_id:
+			continue
+
+		# 发送心跳包来触发 P2P 连接建立
+		var heartbeat = {
+			"type": MessageType.HEARTBEAT,
+			"from": SteamManager.steam_id,
+			"timestamp": Time.get_ticks_msec()
+		}
+
+		send_message_to(peer_id, heartbeat)
+		print("向玩家 ", member["name"], " (", peer_id, ") 发送心跳包")

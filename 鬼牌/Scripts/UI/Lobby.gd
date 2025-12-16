@@ -46,8 +46,15 @@ func _ready() -> void:
 	# 连接游戏信号
 	GameManager.game_started.connect(_on_game_started)
 
+	# 连接网络消息信号
+	NetworkManager.message_received.connect(_on_network_message_received)
+
 	# 显示房间码
 	room_code_label.text = "房间码: " + str(SteamManager.current_lobby_id)
+
+	# 建立 P2P 连接
+	print("Lobby: 建立 P2P 连接...")
+	NetworkManager.establish_p2p_connections()
 
 	# 如果是房主，显示开始游戏按钮和时间设置
 	if SteamManager.is_lobby_owner:
@@ -209,6 +216,9 @@ func _on_start_game_pressed() -> void:
 	# 获取设置的响应时间
 	var challenge_time = int(time_spinbox.value)
 
+	# 设置为房主
+	NetworkManager.set_as_host()
+
 	# 发送游戏开始消息
 	var game_config = {
 		"max_players": player_list.size(),
@@ -217,7 +227,11 @@ func _on_start_game_pressed() -> void:
 
 	# 初始化游戏
 	GameManager.initialize_game(player_list, game_config)
+
+	# 广播游戏开始消息（包括给自己）
 	NetworkManager.send_game_start(game_config)
+
+	# 房主也需要启动游戏
 	GameManager.start_game()
 
 func _on_leave_pressed() -> void:
@@ -300,3 +314,16 @@ func get_steam_avatar(steam_id: int) -> ImageTexture:
 	avatar_cache[steam_id] = avatar_texture
 
 	return avatar_texture
+
+# 处理网络消息
+func _on_network_message_received(sender_id: int, message: Dictionary) -> void:
+	var msg_type = message.get("type", -1)
+
+	match msg_type:
+		NetworkManager.MessageType.GAME_START:
+			print("Lobby: 收到游戏开始消息")
+			# 客户端收到游戏开始消息，初始化游戏
+			if not SteamManager.is_lobby_owner:
+				var config = message.get("config", {})
+				GameManager.initialize_game(SteamManager.lobby_members, config)
+				GameManager.start_game()
